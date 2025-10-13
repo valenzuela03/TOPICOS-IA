@@ -4,9 +4,6 @@ from datos import Datos
 # Definición de la penalización por no usar 10 CDDs. Valor muy alto.
 PENALIZACION_RUTAS_INCOMPLETAS = 1_000_000_000 
 
-# ==============================================================================
-# CLASE SOLUCIÓN
-# ==============================================================================
 class Solucion:
     """
     Representa una solución de MDVRP, con penalización para forzar 10 CDDs.
