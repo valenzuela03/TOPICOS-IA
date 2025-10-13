@@ -1,11 +1,6 @@
-# datos.py
-
 import math
 import random
 
-# ==============================================================================
-# CLASE DATOS (Datos y Costos)
-# ==============================================================================
 class Datos:
     """
     Clase que almacena los datos estáticos del problema de enrutamiento (MDVRP).

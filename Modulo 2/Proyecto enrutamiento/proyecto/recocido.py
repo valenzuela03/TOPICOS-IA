@@ -1,5 +1,3 @@
-# recocido_simulado.py
-
 import random
 import math
 import copy
@@ -138,10 +136,10 @@ class RecocidoSimulado:
                     imprimir_paso = True
 
                 if imprimir_paso:
-                    # LÍNEA DE IMPRESIÓN MODIFICADA: Solo muestra Costo y T
+                    # LÍNEA DE IMPRESIÓN: Muestra solo Costo y T
                     print(f"Paso {paso_total:<5} -> Costo=${solucion_actual.costo_base:,.2f} | T={T:.2f}")
 
-                # --- Lógica de Aceptación/Mejora ---
+                # --- Lógica de Aceptación/Mejora (Metropolis: e^-(Delta/T)) ---
                 if delta_E < 0:
                     solucion_actual = vecino
                     
@@ -170,10 +168,10 @@ if __name__ == "__main__":
     datos = Datos()
     
     # Parámetros del Recocido Simulado
-    T_INICIAL = 500.0          
+    T_INICIAL = 100.0          
     T_FINAL = 0.5            
-    FACTOR_ENFRIAMIENTO = 0.98 
-    ITER_POR_TEMP = 100        
+    FACTOR_ENFRIAMIENTO = 0.95 
+    ITER_POR_TEMP = 200        
     
     # 2. Inicializar y ejecutar el optimizador
     sa = RecocidoSimulado(
@@ -186,7 +184,7 @@ if __name__ == "__main__":
     
     final_solution = sa.optimizar()
 
-    # 3. Generar Reporte Final con el formato exacto solicitado
+    # 3. Generar Reporte Final
     print(f"\nREPORTE FINAL DE DISTRIBUCIÓN (Ruta Óptima por Gasto de Gasolina)")
     print("=======================================================================================================================")
     
