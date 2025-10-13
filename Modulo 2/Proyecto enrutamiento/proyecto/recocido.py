@@ -3,13 +3,13 @@
 import random
 import math
 import copy
-from datos_vrp import DatosVRP 
-from solucion_vrp import SolucionVRP 
+from datos import Datos
+from solucion import Solucion
 
 class RecocidoSimulado:
     """Implementa el algoritmo de Recocido Simulado para el MDVRP."""
     
-    def __init__(self, datos: DatosVRP, temp_inicial, temp_final, factor_enfriamiento, iter_por_temp):
+    def __init__(self, datos: Datos, temp_inicial, temp_final, factor_enfriamiento, iter_por_temp):
         self.datos = datos
         self.T_inicial = temp_inicial
         self.T_final = temp_final
@@ -45,14 +45,14 @@ class RecocidoSimulado:
         rutas_formateadas = [{'deposito': d_info['deposito'], 'clientes': d_info['clientes']} 
                              for d_info in solucion_mapa.values() if d_info['clientes']]
         
-        return SolucionVRP(rutas_formateadas, self.datos)
+        return Solucion(rutas_formateadas, self.datos)
 
-    def _generar_vecino_aleatorio(self, solucion_actual: SolucionVRP):
-        """Genera un vecino aleatorio con movimientos inter-depósito o intra-ruta (swap)."""
+    def _generar_vecino_aleatorio(self, solucion_actual: Solucion):
+        """Genera un vecino aleatorio con movimientos inter-depósito o intra-ruta."""
         
         sol = solucion_actual.rutas
         
-        # 1. Movimiento swap) - 60% probabilidad
+        # 1. Movimiento Inter-Depósito (Swap) - 60% probabilidad
         if len(sol) >= 1 and random.random() < 0.6: 
             r1_idx = random.randint(0, len(sol) - 1)
             r1_info = sol[r1_idx]
@@ -84,7 +84,7 @@ class RecocidoSimulado:
                         nuevas_rutas.append({'deposito': d2, 'clientes': [cliente_movido]})
                 
                 nuevas_rutas_limpia = [r for r in nuevas_rutas if r['clientes']]
-                vecino = SolucionVRP(nuevas_rutas_limpia, self.datos)
+                vecino = Solucion(nuevas_rutas_limpia, self.datos)
                 if vecino.es_valida: return vecino
 
         # 2. Movimiento Intra-Ruta (2-opt) - 40% probabilidad
@@ -102,7 +102,7 @@ class RecocidoSimulado:
                 nuevas_rutas = copy.deepcopy(sol)
                 nuevas_rutas[r_idx]['clientes'] = nueva_ruta_clientes
                 
-                vecino = SolucionVRP(nuevas_rutas, self.datos)
+                vecino = Solucion(nuevas_rutas, self.datos)
                 return vecino
         
         return solucion_actual.copiar() 
@@ -138,8 +138,8 @@ class RecocidoSimulado:
                     imprimir_paso = True
 
                 if imprimir_paso:
-                    cd_rutas = ', '.join(sorted([r['deposito'] for r in solucion_actual.rutas if r['clientes']]))
-                    print(f"Paso {paso_total:<5} -> CDD usados: [{cd_rutas}] | Costo=${solucion_actual.costo_base:.2f} | T={T:.2f}")
+                    # LÍNEA DE IMPRESIÓN MODIFICADA: Solo muestra Costo y T
+                    print(f"Paso {paso_total:<5} -> Costo=${solucion_actual.costo_base:,.2f} | T={T:.2f}")
 
                 # --- Lógica de Aceptación/Mejora ---
                 if delta_E < 0:
@@ -167,13 +167,13 @@ class RecocidoSimulado:
 if __name__ == "__main__":
     
     # 1. Inicializar datos
-    datos = DatosVRP()
+    datos = Datos()
     
     # Parámetros del Recocido Simulado
-    T_INICIAL = 100.0          
+    T_INICIAL = 500.0          
     T_FINAL = 0.5            
-    FACTOR_ENFRIAMIENTO = 0.95 
-    ITER_POR_TEMP = 200        
+    FACTOR_ENFRIAMIENTO = 0.98 
+    ITER_POR_TEMP = 100        
     
     # 2. Inicializar y ejecutar el optimizador
     sa = RecocidoSimulado(
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     final_solution = sa.optimizar()
 
     # 3. Generar Reporte Final con el formato exacto solicitado
-    print(f"\nREPORTE FINAL DE DISTRIBUCIÓN")
+    print(f"\nREPORTE FINAL DE DISTRIBUCIÓN (Ruta Óptima por Gasto de Gasolina)")
     print("=======================================================================================================================")
     
     print(f" Gasto Total de Gasolina: ${final_solution.costo_base:,.2f}") 
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         deposito = ruta_info['deposito']
         ruta_clientes = ruta_info['clientes']
         
-        costo_ruta = SolucionVRP([ruta_info], datos).costo_base
+        costo_ruta = Solucion([ruta_info], datos).costo_base
         
         print(f"\nDistribuidor: {deposito} (Ruta {i+1})")
         print(f"    - Costo de Gasolina: ${costo_ruta:,.2f}")

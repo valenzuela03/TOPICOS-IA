@@ -1,12 +1,12 @@
-# datos_vrp.py
+# datos.py
 
 import math
 import random
 
 # ==============================================================================
-# CLASE DATOS VRP (Datos y Costos)
+# CLASE DATOS (Datos y Costos)
 # ==============================================================================
-class DatosVRP:
+class Datos:
     """
     Clase que almacena los datos estáticos del problema de enrutamiento (MDVRP).
     """
@@ -66,34 +66,29 @@ class DatosVRP:
             "TT89": (24.845191, -107.320578), "TT90": (24.877417, -107.344025)
         }
         
-        self.DEMANDAS = {}
-        self.tiendas = [f"TT{i}" for i in range(1, 91)]
-        for tienda in self.tiendas:
-            # Simulación de demandas entre 100 y 500
-            self.DEMANDAS[tienda] = random.randint(100, 500) 
+        self.clientes = [f"TT{i}" for i in range(1, 91)]
+        self.DEMANDAS = {cliente: random.randint(100, 500) for cliente in self.clientes}
         
         self.CAPACIDAD_VEHICULO = 4000 
-        self.DEPOSITOS_DISPONIBLES = [f"CDD{i}" for i in range(1, 11)] # 10 depósitos
+        self.DEPOSITOS_DISPONIBLES = [f"CDD{i}" for i in range(1, 11)]
         self.COSTO_MATRIX = self._cargar_matriz_costos_combustible() 
-        self.clientes = self.tiendas 
 
     def _cargar_matriz_costos_combustible(self):
-        """Simula la carga de la matriz de costos de combustible (gasto de gasolina)."""
+        """Simula la carga de la matriz de costos de combustible."""
         matrix = {}
         nodos = list(self.COORDENADAS.keys())
-        FACTOR_COSTO = random.uniform(800, 1200) # Factor base para convertir distancia a costo
+        FACTOR_COSTO = random.uniform(800, 1200) 
         
         for i in nodos:
-            matrix[i] = {} # Inicializa la fila
+            matrix[i] = {}
             for j in nodos:
                 if i == j:
-                    matrix[i][j] = 0.0 # Costo cero para la misma ubicación
+                    matrix[i][j] = 0.0
                 else:
-                    c1 = self.COORDENADAS[i] 
+                    c1 = self.COORDENADAS[i]
                     c2 = self.COORDENADAS[j]
-                    dx = c1[0] - c2[0] # Diferencia en latitud
-                    dy = c1[1] - c2[1] # Diferencia en longitud
-                    distancia_euclidiana = math.sqrt(dx**2 + dy**2) # Distancia en línea recta
-                    # Simula variabilidad en el costo
+                    dx = c1[0] - c2[0]
+                    dy = c1[1] - c2[1]
+                    distancia_euclidiana = math.sqrt(dx**2 + dy**2)
                     matrix[i][j] = distancia_euclidiana * FACTOR_COSTO * random.uniform(0.95, 1.05)
         return matrix
