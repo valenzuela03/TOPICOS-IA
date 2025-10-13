@@ -2,7 +2,7 @@
 
 #### Modulo 1: Investigacion de agricultura de precisión
 
-#### Modulo 2: 
+#### Modulo 2: Sistema de enrutamiento para distribución de productos (Metodo de Recocido Simulado)
 
 #### Modulo 3: 
 
