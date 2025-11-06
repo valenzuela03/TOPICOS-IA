@@ -4,6 +4,10 @@
 
 #### Modulo 2: Sistema de enrutamiento para distribución de productos (Metodo de Recocido Simulado)
 
-#### Modulo 3: 
+#### Modulo 3: Optimizacion de riego con enjambre de partículas
 
 #### Modulo 4:
+
+#### Integrantes:
+- Aviles Bravo Cesar Amado
+- Valenzuela Berrelleza Cesar Jesus
