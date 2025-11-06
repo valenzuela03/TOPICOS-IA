@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # 4. Visualización (Solo Mapa Geoespacial)
 
-    # b) Mapa de la colocación óptima
+    # Tamaño de grafica
     plt.figure(figsize=(10, 7))
 
     # Puntos de referencia (Cultivos)

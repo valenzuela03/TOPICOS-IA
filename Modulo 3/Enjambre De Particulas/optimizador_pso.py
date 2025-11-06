@@ -19,8 +19,7 @@ class OptimizadorPSO:
         self.W_SUELO = w_suelo
         self.W_COBERTURA = w_cobertura
         
-        # Definición de límites (bounds) para PSO - Opción B: Forzar Latitudes reales
-        # Esto corrige el problema de las latitudes negativas generadas por el PSO.
+        # Definir límites de búsqueda para PSO
         lat_min_real = 25.52  # Mínimo del área de estudio real (Latitud positiva)
         lat_max_real = 25.62  # Máximo del área de estudio real (Latitud positiva)
         
@@ -46,7 +45,7 @@ class OptimizadorPSO:
         distancias = cdist(sensor_coords, self.dp.PUNTOS_REF)
         indices_ref_mas_cercano = np.argmin(distancias, axis=1)
 
-        # --- A. FACTOR CULTIVO (Bucle for tradicional) ---
+        # --- FACTOR CULTIVO (Bucle for tradicional) ---
         closest_cultivos = self.dp.REF_CULTIVOS[indices_ref_mas_cercano]
         
         puntuaciones_cultivo_lista = []
@@ -57,7 +56,7 @@ class OptimizadorPSO:
 
         F_cultivo = np.mean(puntuaciones_cultivo) / max(self.dp.MAPA_CRITICIDAD.values()) 
 
-        # --- B. FACTOR SUELO/TOPOGRAFÍA ---
+        # --- FACTOR SUELO/TOPOGRAFÍA ---
         puntuaciones_salinidad = self.dp.REF_SALINIDAD_NORM[indices_ref_mas_cercano]
         F_salinidad = np.mean(puntuaciones_salinidad) 
 
@@ -66,7 +65,7 @@ class OptimizadorPSO:
         
         F_suelo = 0.5 * F_salinidad + 0.5 * F_elevacion_varianza 
 
-        # --- C. FACTOR COBERTURA ---
+        # --- FACTOR COBERTURA ---
         F_cobertura = 0.0
         if self.N_SENSORES > 1:
             distancias_sensor = cdist(sensor_coords, sensor_coords)
