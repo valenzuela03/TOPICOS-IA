@@ -1,2 +1,17 @@
+# Entorno Virtual (¡CAUSA DEL ERROR!)
 venv/
+
+# Archivos generados por Python/Ultralytics
+__pycache__/
+*.pyc
+
+# Archivos de la base de datos (pueden cambiar frecuentemente)
+db/*.db
+
+# Archivos de modelos grandes que no son 'best.pt'
+models/
+
+# Resultados de entrenamiento (pesos, logs, etc.)
+runs/
+
 data/
