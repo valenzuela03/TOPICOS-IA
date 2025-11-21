@@ -1,18 +1,7 @@
-# Lista de dependencias críticas para el proyecto SDAM (Sistema de Detección de Matrículas).
-
-# 1. VISIÓN ARTIFICIAL Y PROCESAMIENTO DE IMÁGENES
-# OpenCV (headless) para el manejo de imágenes y detección.
-# Versión 4.9.0.80 es estable y compatible con Python 3.11/3.12.
-opencv-python-headless==4.9.0.80 
-
-# NumPy: Esencial para el manejo de arrays de datos (matrices de píxeles) en OpenCV.
-numpy==1.26.4 
-
-# Pillow: Útil para manipulación y preprocesamiento de imágenes antes del OCR.
-Pillow==10.3.0
-
-# 2. RECONOCIMIENTO ÓPTICO DE CARACTERES (OCR)
-# pytesseract: Wrapper de Python para el motor Tesseract OCR.
-# NOTA IMPORTANTE: El motor Tesseract debe estar instalado a nivel de sistema operativo (usando 'brew install tesseract' en macOS).
-pytesseract==0.3.10
+ultralytics # MODELO DE DETECCION DE OBJETOS YOLOv8
+paddlepaddle # FRAMEWORK DE DEEP LEARNING
+paddleocr # OCR
+sqlite3 # BASE DE DATOS SQLITE
+opencv-python # PROCESAMIENTO DE IMAGENES
+numpy # MANEJO DE ARREGLOS
 

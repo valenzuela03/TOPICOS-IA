@@ -18,9 +18,9 @@ def setup_database(db_path):
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        print(f"✅ Conexión a la base de datos '{db_path}' establecida.")
+        print(f"Conexión a la base de datos '{db_path}' establecida.")
     except sqlite3.Error as e:
-        print(f"❌ Error al conectar a SQLite: {e}")
+        print(f"Error al conectar a SQLite: {e}")
         return
 
     sql_create_owners_table = """
@@ -48,9 +48,9 @@ def setup_database(db_path):
         cursor.execute(sql_create_owners_table)
         cursor.execute(sql_create_vehicles_table)
         conn.commit()
-        print("✅ Tablas 'Propietarios' y 'Vehiculos' creadas con éxito.")
+        print("Tablas 'Propietarios' y 'Vehiculos' creadas con éxito.")
     except sqlite3.Error as e:
-        print(f"❌ Error al crear tablas: {e}")
+        print(f"Error al crear tablas: {e}")
         conn.close()
         return
     
@@ -77,9 +77,9 @@ def setup_database(db_path):
         cursor.executemany("INSERT INTO Vehiculos VALUES (?, ?, ?, ?, ?)", vehicles_data)
         
         conn.commit()
-        print("✅ Datos de prueba insertados con éxito.")
+        print("Datos de prueba insertados con éxito.")
     except sqlite3.Error as e:
-        print(f"❌ Error al insertar datos de prueba: {e}")
+        print(f"Error al insertar datos de prueba: {e}")
         conn.close()
         return
 

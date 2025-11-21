@@ -1,8 +1,9 @@
 import sqlite3
 import os
 import cv2
-import pytesseract
+from paddleocr import PaddleOCR
 import numpy as np
+import re
 from ultralytics import YOLO
 
 # --- Configuración de Rutas ---
@@ -11,87 +12,95 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DB_FILE_NAME = "matriculas.db"
 DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
 IMAGE_PATH = os.path.join(PROJECT_ROOT, 'data', 'raw', 'Cars2.png')
-MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'placas_yolov8n', 'weights', 'best.pt')
-
+MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'best.pt')
+            
 
 # --- Módulo de Visión Artificial (Paso 2: Integración YOLO) ---
 
 def detectar_y_leer_placa(image_path: str) -> str | None:
     """
-    Usa el modelo YOLOv8 para detectar la placa y Tesseract para leer los caracteres.
+    Usa el modelo YOLOv8 para detectar la placa y paddleocr para leer los caracteres.
     """
     print(f"--- 🧠 Procesando Imagen: {image_path} ---")
 
     if not os.path.exists(MODEL_PATH):
-        print(f"🛑 ERROR: Modelo entrenado no encontrado en: {MODEL_PATH}")
-        print("   Asegúrate de ejecutar 'python train_yolov8.py' primero.")
-        return "ABC123" # Fallback para demostrar la DB
+        print(f"ERROR: Modelo entrenado no encontrado en: {MODEL_PATH}")
+        return "ABC123" 
 
     if not os.path.exists(image_path):
-        print(f"⚠️ Imagen no encontrada en: {image_path}")
+        print(f"Imagen no encontrada en: {image_path}")
         return "ABC123"
 
-    try:
-        # 1. Cargar el modelo entrenado
-        model = YOLO(MODEL_PATH)
-        print("✅ Modelo YOLOv8n cargado exitosamente.")
-        
-        # 2. Cargar la imagen
-        img = cv2.imread(image_path)
-        if img is None:
-            raise FileNotFoundError(f"No se pudo cargar la imagen: {image_path}. Asegúrese del formato.")
+    # --- CORRECCIÓN PRINCIPAL: Cargar la imagen en memoria ---
+    img_original = cv2.imread(image_path)
+    if img_original is None:
+        print("Error: No se pudo leer el archivo de imagen con OpenCV.")
+        return None
+    # ---------------------------------------------------------
 
-        # 3. Detección con YOLOv8
-        # device='cpu' se usa aquí para compatibilidad general. Si quieres usar MPS/GPU, usa device='mps'
-        results = model(img, verbose=False, device='cpu') 
-        
-        detecciones = results[0].boxes.xyxy
-        
-        if len(detecciones) == 0:
-            print("⚠️ YOLOv8 no detectó ninguna placa en la imagen.")
-            return "ABC123" # Fallback
+    # Iniciar el modelo
+    model = YOLO(MODEL_PATH)
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
-        # Tomar la primera detección (placa con mayor confianza)
-        # Las coordenadas están en formato [x1, y1, x2, y2]
-        x1, y1, x2, y2 = map(int, detecciones[0])
-        
-        # 4. Recortar la matrícula con las coordenadas detectadas
-        cropped_img = img[y1:y2, x1:x2]
-        print(f"✅ Placa detectada y recortada en coordenadas: ({x1}, {y1}) a ({x2}, {y2})")
+    blacklist = ["grupo", "premie", "premier", "mx", "com", "agency", "automotriz"]
+    plate_pattern = r'^[A-Z0-9]{5,8}$' # Mover el patrón aquí para eficiencia
 
-        # 5. Preprocesamiento para OCR (Solo en el recorte)
-        gray = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY) 
-        
-        # Aplicar contraste adaptativo (CLAHE)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        contrasted = clahe.apply(gray)
-        
-        # Binarización
-        _, thresh = cv2.threshold(contrasted, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        # 6. Reconocimiento de Caracteres (OCR)
-        custom_config = r'--oem 3 --psm 8 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-        placa_raw = pytesseract.image_to_string(thresh, config=custom_config)
-        
-        # 7. Limpieza de la matrícula
-        placa_limpia = ''.join(filter(str.isalnum, placa_raw)).upper()
-        
-        
-        if not placa_limpia or len(placa_limpia) < 6:
-             print("⚠️ El OCR (Tesseract) falló al leer los caracteres del recorte de la placa.")
-             return "ABC123" # Fallback si no se puede leer la placa real
-        
-        print(f"✅ OCR exitoso. Matrícula detectada (Limpia): '{placa_limpia}'")
-        
-        return placa_limpia 
-        
-    except pytesseract.TesseractNotFoundError:
-        print("❌ ERROR: Tesseract OCR no está instalado o no se encuentra en el PATH.")
-        return "ABC123"
-    except Exception as e:
-        print(f"❌ Error durante el proceso de Visión Artificial: {e}")
-        return "ABC123"
-        
+    results = model(image_path)
+
+    for result in results:
+        # Verificar si hay detecciones
+        if result.boxes is None or len(result.boxes) == 0:
+            continue
+
+        index_plates = (result.boxes.cls == 0).nonzero(as_tuple=True)[0]
+
+        for idx in index_plates:
+            conf = result.boxes.conf[idx].item()
+            print("confianza:", conf)
+            
+            if conf > 0.5:
+                xyxy = result.boxes.xyxy[idx].squeeze().tolist()
+                x1, y1 = int(xyxy[0]), int(xyxy[1])
+                x2, y2 = int(xyxy[2]), int(xyxy[3])
+
+                # --- CORRECCIÓN: Recortar sobre la variable de imagen (img_original), no el path ---
+                # Aseguramos que las coordenadas no sean negativas para evitar errores
+                y1_c, y2_c = max(0, y1-15), min(img_original.shape[0], y2+15)
+                x1_c, x2_c = max(0, x1-15), min(img_original.shape[1], x2+15)
+                
+                plate_image = img_original[y1_c:y2_c, x1_c:x2_c]
+                # ----------------------------------------------------------------------------------
+
+                # PaddleOCR estándar devuelve una lista de listas, ajustado aquí:
+                result_ocr = ocr.predict(cv2.cvtColor(plate_image, cv2.COLOR_BGR2RGB))
+                
+                # Validación extra por si OCR no detecta nada en el recorte
+                if result_ocr is None or result_ocr[0] is None:
+                    continue
+
+                texts = result_ocr[0]["rec_texts"]
+                plate_pattern = r'^[A-Z0-9]{5,8}$'
+
+
+                for text in texts:
+                    cleaned_text = re.sub(r'[^A-Za-z0-9]', '', text).upper()
+
+                    # Ignorar textos vacíos
+                    if len(cleaned_text) == 0:
+                        continue
+
+                    # Ignorar palabras en lista negra
+                    if any(b in cleaned_text.lower() for b in blacklist):
+                        continue
+
+                    # Filtrar por patrón de placa
+                    if not re.match(plate_pattern, cleaned_text):
+                        continue
+
+                    # Si pasa todos los filtros, esto sí es una placa real
+                    print("Detected Plate Text:", cleaned_text)
+                    return cleaned_text
+    return None
 
 # --- Módulo de Vinculación de Base de Datos (Paso 3) ---
 
@@ -131,7 +140,7 @@ def buscar_datos_vehiculo(placa_numero: str):
             return None
             
     except sqlite3.Error as e:
-        print(f"❌ Error de Base de Datos: {e}")
+        print(f"Error de Base de Datos: {e}")
         return None
     finally:
         if conn:
@@ -144,7 +153,7 @@ def main():
     
     if not os.path.exists(DB_FILE):
         print("------------------------------------------------------------------")
-        print("🛑 ERROR: Base de Datos no encontrada.")
+        print("ERROR: Base de Datos no encontrada.")
         print("   Por favor, ejecute el script de configuración primero:")
         print("   python src/linking_system/setup_db.py")
         print("------------------------------------------------------------------")
@@ -153,14 +162,14 @@ def main():
     placa_detectada_limpia = detectar_y_leer_placa(IMAGE_PATH)
     
     if not placa_detectada_limpia:
-        print("\n❌ No se pudo determinar la matrícula. Finalizando.")
+        print("\n No se pudo determinar la matrícula. Finalizando.")
         return
 
     print(f"\n--- 🔎 Buscando Matrícula '{placa_detectada_limpia}' en DB ---")
     datos_vehiculo = buscar_datos_vehiculo(placa_detectada_limpia)
 
     if datos_vehiculo:
-        print("\n✅ RESULTADO ENCONTRADO:")
+        print("\n RESULTADO ENCONTRADO:")
         print("----------------------------------")
         print(f"Matrícula: {datos_vehiculo['placa']}")
         print(f"Marca/Modelo: {datos_vehiculo['marca']} {datos_vehiculo['modelo']} ({datos_vehiculo['anio']})")
@@ -170,7 +179,7 @@ def main():
         print(f"Dirección: {datos_vehiculo['propietario_direccion']}")
         print("----------------------------------")
     else:
-        print(f"\n❌ Matrícula '{placa_detectada_limpia}' no encontrada en la base de datos.")
+        print(f"\n Matrícula '{placa_detectada_limpia}' no encontrada en la base de datos.")
 
 
 if __name__ == "__main__":
