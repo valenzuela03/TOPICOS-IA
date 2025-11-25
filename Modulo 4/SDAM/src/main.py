@@ -7,48 +7,30 @@ import re
 from ultralytics import YOLO
 
 # --- Configuración de Rutas ---
-# __file__ está en src/. Retrocede (..) para llegar a SDAM/
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DB_FILE_NAME = "matriculas.db"
 DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
-IMAGE_PATH = os.path.join(PROJECT_ROOT, 'data', 'raw', 'Cars2.png')
+# IMAGE_PATH ya no es necesario para la cámara
 MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'best.pt')
             
 
-# --- Módulo de Visión Artificial (Paso 2: Integración YOLO) ---
+# --- Módulo de Visión Artificial (Modificado para Cámara) ---
 
-def detectar_y_leer_placa(image_path: str) -> str | None:
+def detectar_y_leer_placa(frame, model, ocr) -> str | None:
     """
-    Usa el modelo YOLOv8 para detectar la placa y paddleocr para leer los caracteres.
+    Usa el modelo YOLOv8 y PaddleOCR sobre un frame de video.
     """
-    print(f"--- 🧠 Procesando Imagen: {image_path} ---")
-
-    if not os.path.exists(MODEL_PATH):
-        print(f"ERROR: Modelo entrenado no encontrado en: {MODEL_PATH}")
-        return "ABC123" 
-
-    if not os.path.exists(image_path):
-        print(f"Imagen no encontrada en: {image_path}")
-        return "ABC123"
-
-    # --- CORRECCIÓN PRINCIPAL: Cargar la imagen en memoria ---
-    img_original = cv2.imread(image_path)
-    if img_original is None:
-        print("Error: No se pudo leer el archivo de imagen con OpenCV.")
+    # Validar que el frame existe
+    if frame is None:
         return None
-    # ---------------------------------------------------------
-
-    # Iniciar el modelo
-    model = YOLO(MODEL_PATH)
-    ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
     blacklist = ["grupo", "premie", "premier", "mx", "com", "agency", "automotriz"]
-    plate_pattern = r'^[A-Z0-9]{5,8}$' # Mover el patrón aquí para eficiencia
+    plate_pattern = r'^[A-Z0-9]{5,8}$' 
 
-    results = model(image_path)
+    # Detección sobre el frame (verbose=False para no saturar consola)
+    results = model(frame, verbose=False)
 
     for result in results:
-        # Verificar si hay detecciones
         if result.boxes is None or len(result.boxes) == 0:
             continue
 
@@ -56,53 +38,44 @@ def detectar_y_leer_placa(image_path: str) -> str | None:
 
         for idx in index_plates:
             conf = result.boxes.conf[idx].item()
-            print("confianza:", conf)
             
             if conf > 0.5:
                 xyxy = result.boxes.xyxy[idx].squeeze().tolist()
                 x1, y1 = int(xyxy[0]), int(xyxy[1])
                 x2, y2 = int(xyxy[2]), int(xyxy[3])
 
-                # --- CORRECCIÓN: Recortar sobre la variable de imagen (img_original), no el path ---
-                # Aseguramos que las coordenadas no sean negativas para evitar errores
-                y1_c, y2_c = max(0, y1-15), min(img_original.shape[0], y2+15)
-                x1_c, x2_c = max(0, x1-15), min(img_original.shape[1], x2+15)
-                
-                plate_image = img_original[y1_c:y2_c, x1_c:x2_c]
-                # ----------------------------------------------------------------------------------
+                # Dibujar recuadro de detección
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-                # PaddleOCR estándar devuelve una lista de listas, ajustado aquí:
-                result_ocr = ocr.predict(cv2.cvtColor(plate_image, cv2.COLOR_BGR2RGB))
+                # Recortar
+                y1_c, y2_c = max(0, y1-15), min(frame.shape[0], y2+15)
+                x1_c, x2_c = max(0, x1-15), min(frame.shape[1], x2+15)
                 
-                # Validación extra por si OCR no detecta nada en el recorte
+                plate_image = frame[y1_c:y2_c, x1_c:x2_c]
+
+                # PaddleOCR predict
+                try:
+                    result_ocr = ocr.predict(cv2.cvtColor(plate_image, cv2.COLOR_BGR2RGB))
+                except Exception:
+                    continue
+                
                 if result_ocr is None or result_ocr[0] is None:
                     continue
 
                 texts = result_ocr[0]["rec_texts"]
-                plate_pattern = r'^[A-Z0-9]{5,8}$'
-
 
                 for text in texts:
                     cleaned_text = re.sub(r'[^A-Za-z0-9]', '', text).upper()
 
-                    # Ignorar textos vacíos
-                    if len(cleaned_text) == 0:
-                        continue
+                    if len(cleaned_text) == 0: continue
+                    if any(b in cleaned_text.lower() for b in blacklist): continue
+                    if not re.match(plate_pattern, cleaned_text): continue
 
-                    # Ignorar palabras en lista negra
-                    if any(b in cleaned_text.lower() for b in blacklist):
-                        continue
-
-                    # Filtrar por patrón de placa
-                    if not re.match(plate_pattern, cleaned_text):
-                        continue
-
-                    # Si pasa todos los filtros, esto sí es una placa real
-                    print("Detected Plate Text:", cleaned_text)
+                    print("Placa detectada:", cleaned_text)
                     return cleaned_text
     return None
 
-# --- Módulo de Vinculación de Base de Datos (Paso 3) ---
+# --- Módulo de Vinculación de Base de Datos ---
 
 def buscar_datos_vehiculo(placa_numero: str):
     """
@@ -149,38 +122,59 @@ def buscar_datos_vehiculo(placa_numero: str):
 # --- Función Principal ---
 
 def main():
-    """Ejecuta el flujo completo del sistema SDAM."""
-    
     if not os.path.exists(DB_FILE):
-        print("------------------------------------------------------------------")
         print("ERROR: Base de Datos no encontrada.")
-        print("   Por favor, ejecute el script de configuración primero:")
-        print("   python src/linking_system/setup_db.py")
-        print("------------------------------------------------------------------")
         return
 
-    placa_detectada_limpia = detectar_y_leer_placa(IMAGE_PATH)
+    # 1. Cargar modelos UNA VEZ antes del bucle
+    print("--- Cargando modelos... ---")
+    if not os.path.exists(MODEL_PATH):
+        print(f"ERROR: Modelo no encontrado en {MODEL_PATH}")
+        return
+        
+    model = YOLO(MODEL_PATH)
+    # Usamos la config original
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
+
+    # 2. Configuración de Cámara
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("No se pudo abrir la cámara.")
+        return
     
-    if not placa_detectada_limpia:
-        print("\n No se pudo determinar la matrícula. Finalizando.")
-        return
+    cap.set(3, 640)
+    cap.set(4, 480)
 
-    print(f"\n--- 🔎 Buscando Matrícula '{placa_detectada_limpia}' en DB ---")
-    datos_vehiculo = buscar_datos_vehiculo(placa_detectada_limpia)
+    print("\n--- Sistema iniciado. Presiona 'q' para salir ---")
 
-    if datos_vehiculo:
-        print("\n RESULTADO ENCONTRADO:")
-        print("----------------------------------")
-        print(f"Matrícula: {datos_vehiculo['placa']}")
-        print(f"Marca/Modelo: {datos_vehiculo['marca']} {datos_vehiculo['modelo']} ({datos_vehiculo['anio']})")
-        print("----------------------------------")
-        print(f"Propietario: {datos_vehiculo['propietario_nombre']}")
-        print(f"Contacto: {datos_vehiculo['propietario_contacto']}")
-        print(f"Dirección: {datos_vehiculo['propietario_direccion']}")
-        print("----------------------------------")
-    else:
-        print(f"\n Matrícula '{placa_detectada_limpia}' no encontrada en la base de datos.")
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        # Procesar frame
+        placa_detectada = detectar_y_leer_placa(frame, model, ocr)
 
+        if placa_detectada:
+            datos_vehiculo = buscar_datos_vehiculo(placa_detectada)
+            
+            if datos_vehiculo:
+                # Mostrar datos en pantalla
+                texto = f"{datos_vehiculo['placa']} - {datos_vehiculo['propietario_nombre']}"
+                cv2.putText(frame, texto, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                
+                # Imprimir en consola una sola vez (opcional, para no saturar)
+                print(f"Encontrado: {texto}")
+            else:
+                cv2.putText(frame, f"{placa_detectada} - No Registrado", (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+        cv2.imshow('Sistema SDAM', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     main()

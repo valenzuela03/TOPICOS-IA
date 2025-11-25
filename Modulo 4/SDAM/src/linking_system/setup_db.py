@@ -2,10 +2,8 @@ import sqlite3
 import os
 import uuid
 
-# --- Configuración de Rutas Mejorada para setup_db.py (Retrocede dos niveles para llegar a la raíz SDAM) ---
-# __file__ está en src/linking_system/. Retrocede (../..) para llegar a SDAM/
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-# Define la ubicación del archivo de base de datos usando la raíz
+
 DB_FILE_NAME = "matriculas.db"
 DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
 
@@ -86,11 +84,10 @@ def setup_database(db_path):
     conn.close()
 
 if __name__ == "__main__":
-    
-    # Crea el directorio 'db' si no existe
+
     db_dir = os.path.join(PROJECT_ROOT, 'db')
     os.makedirs(db_dir, exist_ok=True)
     
     db_path = get_db_path()
     setup_database(db_path)
-    print("\n¡La base de datos SQLite está lista y poblada!")
+    print("\nLa base de datos SQLite está lista y poblada")

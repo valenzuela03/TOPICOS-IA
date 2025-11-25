@@ -5,7 +5,7 @@ venv/
 __pycache__/
 *.pyc
 
-# Archivos de la base de datos (pueden cambiar frecuentemente)
+# Archivos de la base de datos
 db/*.db
 
 # Archivos de modelos grandes que no son 'best.pt'

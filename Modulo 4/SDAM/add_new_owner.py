@@ -3,7 +3,7 @@ import os
 import uuid
 
 # --- Configuración de Rutas ---
-# __file__ está en la raíz del proyecto (SDAM/).
+# __file__ está en la raíz del proyecto (SDAM/)
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 DB_FILE_NAME = "matriculas.db"
 DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
@@ -24,11 +24,11 @@ def add_data():
     owner_contact = 'Tel: +52 667 485 2854'
     owner_address = 'Blvd Santa anita'
     
-    # Datos del nuevo vehículo (El auto de la imagen)
+    # Datos del nuevo vehículo
     vehicle_marca = 'ford'
     vehicle_modelo = 'fiesta'
     vehicle_anio = 2005
-
+    
     conn = None
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -58,7 +58,7 @@ def add_data():
 if __name__ == "__main__":
     if os.path.exists(DB_FILE):
         add_data()
-        print("\n¡Base de datos actualizada con la placa real!")
+        print("\nBase de datos actualizada con la placa real")
     else:
         print("ERROR: Base de datos 'matriculas.db' no encontrada.")
         print("Ejecuta 'python src/linking_system/setup_db.py' primero.")
