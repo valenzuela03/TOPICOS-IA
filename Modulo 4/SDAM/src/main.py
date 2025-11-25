@@ -10,7 +10,7 @@ from ultralytics import YOLO
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DB_FILE_NAME = "matriculas.db"
 DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
-# IMAGE_PATH ya no es necesario para la cámara
+
 MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'best.pt')
             
 
@@ -24,7 +24,7 @@ def detectar_y_leer_placa(frame, model, ocr) -> str | None:
     if frame is None:
         return None
 
-    blacklist = ["grupo", "premie", "premier", "mx", "com", "agency", "automotriz"]
+    blacklist = ["grupo", "premier", "mx", "com", "automotriz", "sinaloa", "culiacan", "durango", "mex"]
     plate_pattern = r'^[A-Z0-9]{5,8}$' 
 
     # Detección sobre el frame (verbose=False para no saturar consola)
@@ -75,7 +75,7 @@ def detectar_y_leer_placa(frame, model, ocr) -> str | None:
                     return cleaned_text
     return None
 
-# --- Módulo de Vinculación de Base de Datos ---
+# --- Vinculación de Base de Datos ---
 
 def buscar_datos_vehiculo(placa_numero: str):
     """

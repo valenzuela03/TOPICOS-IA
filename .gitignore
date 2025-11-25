@@ -1,12 +1,12 @@
-# Entorno Virtual
-venv/
+    # Entorno Virtual
+    venv/
 
-# Archivos generados por Python/Ultralytics
-__pycache__/
-*.pyc
+    # Archivos generados por Python/Ultralytics
+    __pycache__/
+    *.pyc
 
-# Archivos de la base de datos
-db/*.db
+    # Archivos de la base de datos
+    db/*.db
 
-#imagenes de prueba
-data/
+    #imagenes de prueba
+    data/

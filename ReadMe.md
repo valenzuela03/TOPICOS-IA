@@ -6,7 +6,7 @@
 
 #### Modulo 3: Optimizacion de riego con enjambre de partículas
 
-#### Modulo 4:
+#### Modulo 4: Sistema de Detección y Asociacion de Matrículas (SDAM)
 
 #### Integrantes:
 - Aviles Bravo Cesar Amado
