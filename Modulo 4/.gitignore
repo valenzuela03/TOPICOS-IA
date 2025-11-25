@@ -1,5 +1,6 @@
     # Entorno Virtual
-    venv/
+   **/venv/
+
 
     # Archivos generados por Python/Ultralytics
     __pycache__/
