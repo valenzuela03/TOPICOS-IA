@@ -14,11 +14,11 @@ DB_FILE = os.path.join(PROJECT_ROOT, "db", DB_FILE_NAME)
 MODEL_PATH = os.path.join(PROJECT_ROOT, 'models', 'best.pt')
             
 
-# --- Módulo de Visión Artificial (Modificado para Cámara) ---
+# --- Vision artifical ---
 
 def detectar_y_leer_placa(frame, model, ocr) -> str | None:
     """
-    Usa el modelo YOLOv8 y PaddleOCR sobre un frame de video.
+    Usa el modelo YOLOv8 y PaddleOCR sobre un| frame de video.
     """
     # Validar que el frame existe
     if frame is None:
@@ -27,14 +27,14 @@ def detectar_y_leer_placa(frame, model, ocr) -> str | None:
     blacklist = ["grupo", "premier", "mx", "com", "automotriz", "sinaloa", "culiacan", "durango", "mexico"]
     plate_pattern = r'^[A-Z0-9]{5,8}$' 
 
-    # Detección sobre el frame (verbose=False para no saturar consola)
+    # Detección sobre el frame
     results = model(frame, verbose=False)
 
     for result in results:
         if result.boxes is None or len(result.boxes) == 0:
             continue
 
-        index_plates = (result.boxes.cls == 0).nonzero(as_tuple=True)[0]
+        index_plates = (result.boxes.cls == 0).nonzero(as_tuple=True)[0] 
 
         for idx in index_plates:
             conf = result.boxes.conf[idx].item()
@@ -136,7 +136,7 @@ def main():
     # Usamos la config original
     ocr = PaddleOCR(use_angle_cls=True, lang='en')
 
-    # 2. Configuración de Cámara
+    # 2. Configuracion de Camara
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("No se pudo abrir la cámara.")
@@ -159,11 +159,11 @@ def main():
             datos_vehiculo = buscar_datos_vehiculo(placa_detectada)
             
             if datos_vehiculo:
-                # Mostrar datos en pantalla
+                # Datos en pantalla
                 texto = f"{datos_vehiculo['placa']} - {datos_vehiculo['propietario_nombre']} - {datos_vehiculo['marca']} - {datos_vehiculo['modelo']} - ({datos_vehiculo['anio']} - {datos_vehiculo['propietario_contacto']} - {datos_vehiculo['propietario_direccion']})"
                 cv2.putText(frame, texto, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
-                # Imprimir en consola una sola vez (opcional, para no saturar)
+                # Imprimir en consola
                 print(f"Encontrado: {texto}")
             else:
                 texto = f"{placa_detectada} - No Registrado"
