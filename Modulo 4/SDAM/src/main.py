@@ -24,7 +24,7 @@ def detectar_y_leer_placa(frame, model, ocr) -> str | None:
     if frame is None:
         return None
 
-    blacklist = ["grupo", "premier", "mx", "com", "automotriz", "sinaloa", "culiacan", "durango", "mex"]
+    blacklist = ["grupo", "premier", "mx", "com", "automotriz", "sinaloa", "culiacan", "durango", "mexico"]
     plate_pattern = r'^[A-Z0-9]{5,8}$' 
 
     # Detección sobre el frame (verbose=False para no saturar consola)
@@ -160,12 +160,14 @@ def main():
             
             if datos_vehiculo:
                 # Mostrar datos en pantalla
-                texto = f"{datos_vehiculo['placa']} - {datos_vehiculo['propietario_nombre']}"
+                texto = f"{datos_vehiculo['placa']} - {datos_vehiculo['propietario_nombre']} - {datos_vehiculo['marca']} - {datos_vehiculo['modelo']} - ({datos_vehiculo['anio']} - {datos_vehiculo['propietario_contacto']} - {datos_vehiculo['propietario_direccion']})"
                 cv2.putText(frame, texto, (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
                 
                 # Imprimir en consola una sola vez (opcional, para no saturar)
                 print(f"Encontrado: {texto}")
             else:
+                texto = f"{placa_detectada} - No Registrado"
+                print(f"Placa no registrada: {placa_detectada}")
                 cv2.putText(frame, f"{placa_detectada} - No Registrado", (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         cv2.imshow('Sistema SDAM', frame)

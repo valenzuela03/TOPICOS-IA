@@ -14,20 +14,20 @@ def add_data():
     """
     
     # Datos a insertar
-    new_placa = 'VSU492D'  # Matrícula REAL del vehículo
+    new_placa = 'UK97781'  # Placa del carro
     
-    # Generar un ID único para el nuevo propietario
+    # Genera un ID unico para el nuevo propietario
     new_owner_id = str(uuid.uuid4())
     
     # Datos del nuevo propietario
-    owner_name = 'Renata Lopez'
-    owner_contact = 'Tel: +52 667 293 1938'
-    owner_address = 'Granada 1239, Culiacán, Sinaloa, México'
+    owner_name = 'Luis Aguirre'
+    owner_contact = 'Tel: +52 667 974 7635'
+    owner_address = 'Conquista 983, Culiacán, Sinaloa, México'
     
     # Datos del nuevo vehículo
-    vehicle_marca = 'toyota'
-    vehicle_modelo = 'corolla'
-    vehicle_anio = 2017
+    vehicle_marca = 'nissan'
+    vehicle_modelo = 'Frontier'
+    vehicle_anio = 2022
     
     conn = None
     try:
