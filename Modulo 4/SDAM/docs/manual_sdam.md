@@ -70,13 +70,7 @@ python src/main.py
 
   ---------------------------------------- ------------------------------
   **Recuadro Verde**                       
-  Placa detectada. YOLOv8 la ha localizado con alta confianza.
-
-  **Texto Verde (parte inferior)**         
-  Placa registrada en la base de datos.
-
-  **Texto Rojo (parte inferior)**         
-  Placa no registrada.
+  Placa detectada.
 
   -----------------------------------------------------------------------
 
