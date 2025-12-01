@@ -1,0 +1,2 @@
+## Proyecto SDAM (Sistema de Detección y Administración de Matriculas)
+Este proyecto implementa un sistema de detección y administración de matrículas vehiculares utilizando técnicas de visión por computadora y reconocimiento óptico de caracteres (OCR). El sistema está diseñado para capturar imágenes o video de vehículos, detectar las matrículas, leer los caracteres y almacenar la información en una base de datos SQLite.
